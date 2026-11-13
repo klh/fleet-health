@@ -1,0 +1,12 @@
+// probe the stub's 403 face — expected verdict: down. The server
+// RESPONDS, but a good HTTP citizen counts 4xx as failure.
+{
+  probe: {
+    target: "http://stub:8080/forbidden",
+    every_ms: 200,
+    timeout_ms: 1500,
+    miss_limit: 2,
+    ring: 8,
+  },
+  serve: { port: 4112, bind: "0.0.0.0", verdict_file: "/tmp/verdict.json" },
+}

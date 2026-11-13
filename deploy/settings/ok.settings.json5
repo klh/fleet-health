@@ -1,0 +1,11 @@
+// probe the stub's 200 face — expected verdict: up.
+{
+  probe: {
+    target: "http://stub:8080/ok",
+    every_ms: 200,
+    timeout_ms: 1500,
+    miss_limit: 2,
+    ring: 8,
+  },
+  serve: { port: 4112, bind: "0.0.0.0", verdict_file: "/tmp/verdict.json" },
+}

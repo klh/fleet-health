@@ -1,0 +1,14 @@
+# compose.forbidden.yaml — scenario 2: the sidecar watches the stub's
+# 403 face. The server responds, but 4xx is a failure for a good HTTP
+# citizen — expected verdict: DOWN.
+services:
+  stub:
+    build: ./stub
+  health:
+    build: ..
+    environment:
+      HEALTH_SETTINGS: /etc/health/settings.json5
+    volumes:
+      - ./settings/forbidden.settings.json5:/etc/health/settings.json5:ro
+    ports:
+      - "4822:4112"

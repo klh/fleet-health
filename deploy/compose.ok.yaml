@@ -1,0 +1,14 @@
+# compose.ok.yaml — scenario 1: the sidecar watches the stub's 200
+# face. Expected verdict: UP. Self-contained (one network, two
+# containers, settings mounted from this repo — no host dependency).
+services:
+  stub:
+    build: ./stub
+  health:
+    build: ..
+    environment:
+      HEALTH_SETTINGS: /etc/health/settings.json5
+    volumes:
+      - ./settings/ok.settings.json5:/etc/health/settings.json5:ro
+    ports:
+      - "4821:4112"
