@@ -1,0 +1,4 @@
+# bun test owns ONLY colocated *.test.ts under src/;
+# the root /test tree belongs to @playwright/test.
+[test]
+root = "src"

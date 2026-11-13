@@ -1,0 +1,29 @@
+{
+  "name": "@fleet/health",
+  "version": "0.1.0",
+  "description": "outside-process health verdict sidecar — poll the real target, serve the file",
+  "type": "module",
+  "license": "UNLICENSED",
+  "bin": { "fleet-health": "./src/main/health.main.ts" },
+  "exports": {
+    ".": "./src/index.ts",
+    "./schemas": "./src/schemas/index.ts",
+    "./openapi.json": "./openapi.json",
+    "./deploy": "./deploy/index.ts"
+  },
+  "scripts": {
+    "test": "bun test",
+    "check": "bun tools/src/health.check-laws.ts && bun tools/src/health.gen-openapi.ts --check",
+    "gen:openapi": "bun tools/src/health.gen-openapi.ts",
+    "smoke": "bun --bun playwright test --project=smoke"
+  },
+  "dependencies": {
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.65.0",
+    "@types/bun": "1.4.4",
+    "typescript": "5.9.3"
+  },
+  "engines": { "bun": ">=1.2" }
+}

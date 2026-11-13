@@ -1,0 +1,14 @@
+node_modules/
+.qlty/logs/
+.qlty/results/
+.qlty/out/
+.qlty/plugin_cachedir/
+.qlty/sources/
+test-results/
+playwright-report/
+*.tmp
+.qlty/logs/
+.qlty/results/
+.qlty/out/
+.qlty/plugin_cachedir/
+.qlty/sources/
