@@ -155,6 +155,9 @@ export function createMonitor(settings: HealthSettings) {
       stale: !fresh,
       misses,
       miss_limit: settings.probe.miss_limit,
+      // the cadence, stamped NEXT TO the timestamps — consumers count
+      // missed writes and judge the SIDECAR, not just the target
+      every_ms: settings.probe.every_ms,
       last_ok: lastOk,
       latency_ms: last?.ms ?? null,
       checked_at: last?.at ?? null,

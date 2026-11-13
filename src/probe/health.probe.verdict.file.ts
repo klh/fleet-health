@@ -1,8 +1,9 @@
 // health.probe.verdict.file.ts — THE DECOUPLING: the poll loop writes
 // the verdict to a JSON file (atomic: tmp + rename); the face serves
 // that file. Request waves against /healthz are file reads — they can
-// never starve, block, or DDoS the probe loop. Missing/unreadable file
-// reports down (fail-closed).
+// never starve, block, or DDoS the probe loop. Read is parse-only:
+// freshness belongs to the FACE at serve time (a dead writer must not
+// ride a stale file as 200); missing/unreadable file = no verdict.
 import { mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 import { HealthVerdict } from "../schemas/health.verdict.zod.ts";
@@ -14,23 +15,9 @@ export function writeVerdictAtomic(path: string, verdict: HealthVerdict): void {
   renameSync(tmp, path);
 }
 
-export function readVerdict(
-  path: string,
-  maxAgeMs: number,
-  now = Date.now(),
-): HealthVerdict | null {
+export function readVerdictRaw(path: string): HealthVerdict | null {
   try {
-    const verdict = HealthVerdict.parse(JSON.parse(readFileSync(path, "utf8")));
-    const ageOf = (time: string | null): number =>
-      time === null ? Infinity : now - Date.parse(time);
-    const fresh =
-      ageOf(verdict.timestamp) >= 0 &&
-      ageOf(verdict.timestamp) <= maxAgeMs &&
-      ageOf(verdict.checked_at) >= 0 &&
-      ageOf(verdict.checked_at) <= maxAgeMs;
-    return fresh
-      ? verdict
-      : { ...verdict, ok: false, state: "down", stale: true };
+    return HealthVerdict.parse(JSON.parse(readFileSync(path, "utf8")));
   } catch {
     return null;
   }

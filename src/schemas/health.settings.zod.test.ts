@@ -11,7 +11,7 @@ describe("HealthSettings", () => {
     expect(s.probe.target).toBe("http://my-service:8080/healthz");
     expect(s.probe.every_ms).toBe(5000);
     expect(s.probe.miss_limit).toBe(3);
-    expect(s.serve.port).toBe(4112);
+    expect(s.serve.port).toBe(8081);
     expect(s.serve.verdict_file).toBe("/var/run/fleet-health/verdict.json");
   });
 

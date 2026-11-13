@@ -1,11 +1,12 @@
 // health.probe.verdict.file.test.ts — colocated unit (bun test): the
-// decoupling artifact — atomic write, verbatim read-back through the
-// schema, fail-closed on a missing file.
+// decoupling artifact — atomic write, verbatim parse-only read-back,
+// fail-closed on missing/garbage files. Serve-time freshness lives in
+// the face (health.face.freshness) — a dead writer is the FACE's call.
 import { describe, expect, test } from "bun:test";
-import { mkdtempSync } from "node:fs";
+import { mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { readVerdict, writeVerdictAtomic } from "./health.probe.verdict.file.ts";
+import { readVerdictRaw, writeVerdictAtomic } from "./health.probe.verdict.file.ts";
 import { HealthVerdict } from "../schemas/health.verdict.zod.ts";
 
 const verdict: HealthVerdict = HealthVerdict.parse({
@@ -17,6 +18,7 @@ const verdict: HealthVerdict = HealthVerdict.parse({
   stale: false,
   misses: 4,
   miss_limit: 3,
+  every_ms: 5000,
   last_ok: null,
   latency_ms: null,
   checked_at: new Date().toISOString(),
@@ -27,46 +29,21 @@ const verdict: HealthVerdict = HealthVerdict.parse({
 });
 
 describe("verdict file", () => {
-  test("atomic write then schema-clean read-back", () => {
+  test("atomic write then verbatim read-back (every_ms rides next to checked_at)", () => {
     const dir = mkdtempSync(join(tmpdir(), "fh-"));
     const path = join(dir, "verdict.json");
     writeVerdictAtomic(path, verdict);
-    const read = readVerdict(path, 9000);
-    expect(read?.state).toBe("down");
-    expect(read?.ok).toBe(false);
+    const read = readVerdictRaw(path);
+    expect(read).toEqual(verdict);
   });
 
-  test("missing file → null (fail-closed; the face reports down)", () => {
-    expect(readVerdict("/nonexistent/verdict.json", 9000)).toBeNull();
+  test("missing file → null (fail-closed; the face reports no verdict)", () => {
+    expect(readVerdictRaw("/nonexistent/verdict.json")).toBeNull();
   });
 
-  test("an old successful file becomes down when read", () => {
-    const now = Date.now();
-    const path = join(mkdtempSync(join(tmpdir(), "fh-stale-")), "verdict.json");
-    writeVerdictAtomic(path, {
-      ...verdict,
-      ok: true,
-      state: "up",
-      checked_at: new Date(now - 10_000).toISOString(),
-      timestamp: new Date(now - 10_000).toISOString(),
-    });
-    const read = readVerdict(path, 9000, now);
-    expect(read?.ok).toBe(false);
-    expect(read?.state).toBe("down");
-    expect(read?.stale).toBe(true);
-    expect(read?.timestamp).toBe(new Date(now - 10_000).toISOString());
-  });
-
-  test("a new file cannot refresh an old wire observation", () => {
-    const now = Date.now();
-    const path = join(mkdtempSync(join(tmpdir(), "fh-stale-")), "verdict.json");
-    writeVerdictAtomic(path, {
-      ...verdict,
-      ok: true,
-      state: "up",
-      checked_at: new Date(now - 10_000).toISOString(),
-      timestamp: new Date(now).toISOString(),
-    });
-    expect(readVerdict(path, 9000, now)?.ok).toBe(false);
+  test("garbage file → null (schema drift never vouches)", () => {
+    const path = join(mkdtempSync(join(tmpdir(), "fh-")), "verdict.json");
+    writeFileSync(path, "{not json", "utf8");
+    expect(readVerdictRaw(path)).toBeNull();
   });
 });

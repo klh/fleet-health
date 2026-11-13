@@ -9,9 +9,13 @@ compose health checks hit THIS sidecar, never the served process.
 file (atomic); the HTTP face SERVES that file. Request waves against
 `/healthz` are file reads — they can never starve the probe loop.
 
-Verdict machine: `up` → `degrading` (misses ≥ limit, ACTIVE confirming
-re-probe before the flip) → `down`; any success recovers; stale samples
-never vouch. Fail-closed on declared-but-unset credentials.
+Verdict machine: `up` → `degrading` after a missed poll (still healthy
+below `miss_limit`) → ACTIVE confirming re-probe at the limit → `down`
+if confirmation fails. Any success recovers. The JSON verdict and both
+HTTP faces include a timestamp. The HTTP face checks the stored poll
+time and write time on every request, so an old success becomes a 502
+with `stale: true` even if the poller stops. Fail-closed on
+declared-but-unset credentials.
 
 - **Config**: strictly JSON5 — one generic example; the consuming stack owns instances.
 - **Types**: every type is `z.output<typeof Schema>` — never hand-written.
@@ -26,3 +30,12 @@ never vouch. Fail-closed on declared-but-unset credentials.
     bun run smoke               # binary smoke
     bun run check               # laws + openapi drift
     bun src/main/health.main.ts --settings deploy/settings/example.settings.json5
+
+## The stale-verdict law (consumer contract)
+
+A dead WRITER would leave the last file serving as 200 forever — so the
+verdict carries `every_ms` next to `checked_at`, the face recomputes
+freshness at SERVE time, and `/healthz` answers 200 / 502 (target
+down) / **503 STALE VERDICT** (writer stopped writing; `checked_at`,
+`every_ms`, `missed_updates` still visible). Consumers count missed
+writes and deem the sidecar unhealthy after their own x.

@@ -37,9 +37,8 @@ async function freePort(): Promise<number> {
 
 describe("health verdict state machine", () => {
   test("every poll carries a W3C trace id through to the sample", async () => {
-    const port = await freePort();
-    const target = stub(port, true);
-    const monitor = createMonitor(settingsFor(port));
+    const target = stub(0, true);
+    const monitor = createMonitor(settingsFor(target.port ?? 0));
     await monitor.poll();
     const snap = monitor.snapshot();
     expect(snap.state).toBe("up");
@@ -48,9 +47,8 @@ describe("health verdict state machine", () => {
   });
 
   test("target up → verdict up, ok true", async () => {
-    const port = await freePort();
-    const target = stub(port, true);
-    const monitor = createMonitor(settingsFor(port));
+    const target = stub(0, true);
+    const monitor = createMonitor(settingsFor(target.port ?? 0));
     await monitor.poll();
     const snap = monitor.snapshot();
     expect(snap.state).toBe("up");
@@ -70,19 +68,20 @@ describe("health verdict state machine", () => {
   });
 
   test("healthy → target breaks → degrading past miss_limit → down; recovery → up", async () => {
-    const port = await freePort();
     let ok = true;
     const target = Bun.serve({
-      port,
+      port: 0,
       fetch: () =>
         ok ? Response.json({ ok: true }) : new Response("boom", { status: 500 }),
     });
-    const monitor = createMonitor(settingsFor(port));
+    const monitor = createMonitor(settingsFor(target.port ?? 0));
     await monitor.poll();
     expect(monitor.snapshot().state).toBe("up");
 
     ok = false;
     await monitor.poll(); // miss 1
+    expect(monitor.snapshot().state).toBe("degrading");
+    expect(monitor.snapshot().ok).toBe(true);
     await monitor.poll(); // miss 2 ≥ limit → degrading + confirming re-probe → down
     expect(monitor.snapshot().state).toBe("down");
 
@@ -93,12 +92,11 @@ describe("health verdict state machine", () => {
   });
 
   test("a body that says ok:false is NOT up (the wire answer is the truth)", async () => {
-    const port = await freePort();
     const target = Bun.serve({
-      port,
+      port: 0,
       fetch: () => Response.json({ ok: false, status: "degraded" }, { status: 200 }),
     });
-    const monitor = createMonitor(settingsFor(port));
+    const monitor = createMonitor(settingsFor(target.port ?? 0));
     await monitor.poll();
     expect(monitor.snapshot().ok).toBe(false);
     target.stop(true);

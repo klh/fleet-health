@@ -31,6 +31,9 @@ export const HealthVerdict = z
     miss_limit: z.number().int().min(1),
     last_ok: z.iso.datetime().nullable(),
     latency_ms: z.number().int().min(0).nullable(),
+    // the write cadence STAMPED NEXT TO the timestamp — a consumer can
+    // count missed writes and deem the sidecar unhealthy after x pass
+    every_ms: z.number().int().min(100),
     checked_at: z.iso.datetime().nullable(),
     timestamp: z.iso.datetime().nullable(),
     error: z.string().nullable(),
@@ -53,9 +56,12 @@ export const HealthFace = z
     state: HealthVerdictState,
     check: z.enum(["http-liveness", "inference-route", "route-catalog"]),
     target: z.string().min(1),
-    interval_ms: z.number().int().min(100),
+    every_ms: z.number().int().min(100),
     checked_at: z.iso.datetime().nullable(),
     timestamp: z.iso.datetime().nullable(),
+    // serve-time count of missed write cadences (null = no file at all);
+    // STALE when >= STALE_MISSES — the writer died, the file is frozen
+    missed_updates: z.number().int().min(0).nullable(),
     stale: z.boolean(),
   })
   .strict();
