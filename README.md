@@ -13,7 +13,7 @@ Verdict machine: `up` → `degrading` (misses ≥ limit, ACTIVE confirming
 re-probe before the flip) → `down`; any success recovers; stale samples
 never vouch. Fail-closed on declared-but-unset credentials.
 
-- **Config**: strictly JSON5 (`deploy/settings/*.settings.json5`).
+- **Config**: strictly JSON5 — one generic example; the consuming stack owns instances.
 - **Types**: every type is `z.output<typeof Schema>` — never hand-written.
 - **Faces**: `GET /healthz` (compact, 200/502) · `GET /status` (full).
 - **Tests**: colocated `*.test.ts` on bun test; `/test` smoke on
@@ -25,4 +25,4 @@ never vouch. Fail-closed on declared-but-unset credentials.
     bun test                    # units
     bun run smoke               # binary smoke
     bun run check               # laws + openapi drift
-    bun src/main/health.main.ts --settings src/schemas/fixtures/h1.settings.json5
+    bun src/main/health.main.ts --settings deploy/settings/example.settings.json5

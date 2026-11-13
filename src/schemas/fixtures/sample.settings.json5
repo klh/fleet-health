@@ -1,0 +1,13 @@
+{
+  // sample.settings.json5 — parse-fixture shape example (generic sidecar,
+  // knows nothing of any particular consumer).
+  probe: {
+    // what to poll over the network — any service's liveness face
+    target: "http://my-service:8080/healthz",
+  },
+  serve: {
+    // the sidecar's OWN port: compose health hits THIS, never the target
+    port: 8081,
+    bind: "0.0.0.0",
+  },
+}

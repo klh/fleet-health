@@ -32,6 +32,7 @@ export const HealthVerdict = z
     last_ok: z.iso.datetime().nullable(),
     latency_ms: z.number().int().min(0).nullable(),
     checked_at: z.iso.datetime().nullable(),
+    timestamp: z.iso.datetime().nullable(),
     error: z.string().nullable(),
     probes: z
       .object({
@@ -53,6 +54,9 @@ export const HealthFace = z
     check: z.enum(["http-liveness", "inference-route", "route-catalog"]),
     target: z.string().min(1),
     interval_ms: z.number().int().min(100),
+    checked_at: z.iso.datetime().nullable(),
+    timestamp: z.iso.datetime().nullable(),
+    stale: z.boolean(),
   })
   .strict();
 export type HealthFace = z.output<typeof HealthFace>;

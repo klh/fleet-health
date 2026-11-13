@@ -1,0 +1,14 @@
+{
+  // example.settings.json5 — a GENERIC sidecar: point it at ANY http
+  // target. The consumer's stack owns instance settings (mounts them);
+  // this file just documents the shape for a standalone run.
+  probe: {
+    // what to poll over the network — any service's liveness face
+    target: "http://my-service:8080/healthz",
+  },
+  serve: {
+    // the sidecar's OWN port: compose health hits THIS, never the target
+    port: 8081,
+    bind: "0.0.0.0",
+  },
+}

@@ -14,9 +14,23 @@ export function writeVerdictAtomic(path: string, verdict: HealthVerdict): void {
   renameSync(tmp, path);
 }
 
-export function readVerdict(path: string): HealthVerdict | null {
+export function readVerdict(
+  path: string,
+  maxAgeMs: number,
+  now = Date.now(),
+): HealthVerdict | null {
   try {
-    return HealthVerdict.parse(JSON.parse(readFileSync(path, "utf8")));
+    const verdict = HealthVerdict.parse(JSON.parse(readFileSync(path, "utf8")));
+    const ageOf = (time: string | null): number =>
+      time === null ? Infinity : now - Date.parse(time);
+    const fresh =
+      ageOf(verdict.timestamp) >= 0 &&
+      ageOf(verdict.timestamp) <= maxAgeMs &&
+      ageOf(verdict.checked_at) >= 0 &&
+      ageOf(verdict.checked_at) <= maxAgeMs;
+    return fresh
+      ? verdict
+      : { ...verdict, ok: false, state: "down", stale: true };
   } catch {
     return null;
   }

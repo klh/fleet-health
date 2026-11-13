@@ -29,8 +29,8 @@ loop. They share nothing.
 
 W3C trace ids through everything — simply: every probe request carries a
 fresh `traceparent`; every sample in the verdict records its trace id.
-No OTel SDK here (simplicity law); the traced citizens (buckle, engine)
-continue these traces into Jaeger.
+No OTel SDK here (simplicity law); the traced target services continue
+these traces in their own backends.
 
 ## Repo laws (same as the fleet stack)
 

@@ -1,11 +1,11 @@
-# compose.yaml — WIRING ONLY. One sidecar example; the demo stack (3
-# buckles + engines + sidecars) lives in fleet-buckle's compose.test.yaml.
+# compose.yaml — wiring-only example of ONE generic sidecar. The
+# consumer's stack owns instance settings; this mounts the example.
 services:
-  health1:
+  health:
     build: ..
     environment:
       HEALTH_SETTINGS: /etc/health/settings.json5
     volumes:
-      - ./settings/h1.settings.json5:/etc/health/settings.json5:ro
+      - ./settings/example.settings.json5:/etc/health/settings.json5:ro
     ports:
-      - "4112:4112"
+      - "8081:8081"

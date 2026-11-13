@@ -148,13 +148,17 @@ export function createMonitor(settings: HealthSettings) {
             ? "route-catalog"
             : "http-liveness",
       state: reported,
-      ok: reported === "up" && last?.ok === true,
+      ok:
+        fresh &&
+        (reported === "up" ||
+          (reported === "degrading" && misses < settings.probe.miss_limit && lastOk !== null)),
       stale: !fresh,
       misses,
       miss_limit: settings.probe.miss_limit,
       last_ok: lastOk,
       latency_ms: last?.ms ?? null,
       checked_at: last?.at ?? null,
+      timestamp: new Date().toISOString(),
       error: wireError,
       probes: { total, ok: okTotal, failed: total - okTotal },
       recent: [...ring],
