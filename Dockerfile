@@ -1,5 +1,5 @@
 # fleet-health sidecar image — Bun runs it, nothing else ships.
-FROM oven/bun:1.2-slim
+FROM oven/bun:1.4.4-debian
 WORKDIR /app
 COPY package.json bunfig.toml ./
 COPY src ./src
