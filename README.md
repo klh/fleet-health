@@ -13,7 +13,7 @@ Verdict machine: `up` → `degrading` after a missed poll (still healthy
 below `miss_limit`) → ACTIVE confirming re-probe at the limit → `down`
 if confirmation fails. Any success recovers. The JSON verdict and both
 HTTP faces include a timestamp. The HTTP face checks the stored poll
-time and write time on every request, so an old success becomes a 502
+time and write time on every request, so an old success becomes a 503
 with `stale: true` even if the poller stops. Fail-closed on
 declared-but-unset credentials.
 

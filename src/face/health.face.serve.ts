@@ -39,7 +39,8 @@ export function serveFace(settings: HealthSettings): ReturnType<typeof Bun.serve
       // learns how often this sidecar promised to write
       const everyMs = verdict?.every_ms ?? settings.probe.every_ms;
       const freshness = verdictFreshness(verdict?.checked_at ?? null, everyMs);
-      const stale = freshness.stale || (verdict?.stale ?? true);
+      const writeFreshness = verdictFreshness(verdict?.timestamp ?? null, everyMs);
+      const stale = freshness.stale || writeFreshness.stale || (verdict?.stale ?? true);
       const healthy = verdict !== null && verdict.ok && !stale;
       const status = stale ? 503 : healthy ? 200 : 502;
       const current: HealthVerdict | null = verdict === null ? null : stale

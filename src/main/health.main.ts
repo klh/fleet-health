@@ -23,16 +23,25 @@ async function loadSettings(): Promise<ReturnType<typeof HealthSettings.parse>> 
 
 const settings = await loadSettings();
 const monitor = createMonitor(settings);
+let pollInFlight = false;
 
 async function pollAndWrite(): Promise<void> {
-  await monitor.poll();
-  writeVerdictAtomic(settings.serve.verdict_file, monitor.snapshot());
+  if (pollInFlight) return;
+  pollInFlight = true;
+  try {
+    await monitor.poll();
+    writeVerdictAtomic(settings.serve.verdict_file, monitor.snapshot());
+  } finally {
+    pollInFlight = false;
+  }
 }
 
 // probe once BEFORE serving — the sidecar never vouches from ignorance
 await pollAndWrite();
 const timer = setInterval(() => {
-  void pollAndWrite();
+  void pollAndWrite().catch((error: unknown) => {
+    console.error("fleet-health: probe write failed", error);
+  });
 }, settings.probe.every_ms);
 timer.unref?.();
 

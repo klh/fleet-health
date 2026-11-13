@@ -54,12 +54,36 @@ describe("health face — the writer-died scenario", () => {
       const face = HealthFace.parse(await r.json());
       expect(face.ok).toBe(false);
       expect(face.stale).toBe(true);
-      // the writer's last sworn state is PRESERVED (evidence, not rewritten)
-      expect(face.state).toBe("up");
+      expect(face.state).toBe("down");
       // the consumer contract: checked_at + every_ms + the count, visible
       expect(face.checked_at).toBe(dead);
       expect(face.every_ms).toBe(every);
       expect(face.missed_updates).toBeGreaterThanOrEqual(10);
+      const full = await fetch(`http://127.0.0.1:${server.port}/status`);
+      expect(full.status).toBe(503);
+      expect(HealthVerdict.parse(await full.json())).toMatchObject({
+        ok: false, state: "down", stale: true, timestamp: dead,
+      });
+    } finally {
+      server.stop(true);
+    }
+  });
+
+  test("an old write timestamp also makes a recent sample stale", async () => {
+    const path = dir();
+    const every = 1000;
+    const now = new Date().toISOString();
+    const old = new Date(Date.now() - 10 * every).toISOString();
+    const settings = HealthSettings.parse({
+      probe: { target: "http://my-service:8080/healthz", every_ms: every },
+      serve: { port: 0, verdict_file: path },
+    });
+    writeVerdictAtomic(path, { ...verdictFixture(every, now), timestamp: old });
+    const server = serveFace(settings);
+    try {
+      const response = await fetch(`http://127.0.0.1:${server.port}/healthz`);
+      expect(response.status).toBe(503);
+      expect(HealthFace.parse(await response.json())).toMatchObject({ ok: false, stale: true });
     } finally {
       server.stop(true);
     }

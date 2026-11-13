@@ -8,15 +8,18 @@ Compose health checks hit THIS sidecar, never the served process.
 ## The verdict
 
 - `up` — last poll succeeded on the wire.
-- `degrading` — misses accumulating past `miss_limit`; an ACTIVE
-  confirming re-probe runs before any down flip (a single blip must not
-  drop a service; a stale sample must never vouch for a live one).
+- `degrading` — a missed poll below `miss_limit` keeps the verdict
+  healthy. At the limit an ACTIVE confirming re-probe runs before the
+  down flip (a single blip must not drop a service).
 - `down` — the confirming re-probe also failed. Stays down until any
   poll succeeds again.
 - Probe BEFORE serving: the sidecar never vouches from ignorance.
 - One probe on the wire at a time; a bounded ring of recent samples.
 - Fail-closed: a declared-but-unset credential is a config error, never
   an "up"; a missing or stale verdict file reports down.
+- The JSON file and both HTTP faces carry a timestamp. The face checks
+  both the stored poll time and write time on every read, so a stopped
+  poller cannot leave an old success healthy.
 
 ## The verdict-file law
 

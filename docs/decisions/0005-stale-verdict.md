@@ -13,9 +13,8 @@ checking. Fixes, in contract form:
 - One missed write is GRACE (a slow poll). >= STALE_MISSES (2) missed
   writes = STALE: the file is frozen evidence, not a verdict.
 - Status codes tell three truths: 200 fresh+ok · 502 fresh verdict,
-  TARGET down · 503 STALE VERDICT (writer died) or no file. The
-  writer's last sworn state is PRESERVED on 503 (evidence, never
-  rewritten to "down"), with checked_at + every_ms + missed_updates
-  visible so any consumer can count and apply their own x.
+  TARGET down · 503 STALE VERDICT (writer died) or no file. A stale
+  response has `ok: false`, `state: down`, and `stale: true`; it retains
+  `checked_at`, `timestamp`, `last_ok`, and the recent samples as evidence.
 - Consumer law: anything checking fleet-health ALSO checks the
   timestamp — count missed writes, deem the SIDECAR unhealthy after x.
